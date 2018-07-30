@@ -94,10 +94,15 @@ int main(int argc, char* argv[]) {
 			short tcp_header_len = ((tcp_header[12] & 0xF0 ) * 4) >> 4;
 			//printf("tcp header len : %d\n", tcp_header_len);
 
-			const u_char * data = tcp_header + tcp_header_len;
-			printf("<Data 16 byte>\n");
-			Print_data(data);
-			
+
+			int data_len = ip_header[2] * 256 + ip_header[3] + 14;	// total len + eth_len(14)
+
+			if (data_len >= 16) {
+				const u_char * data = tcp_header + tcp_header_len;
+				printf("<Data 16 byte>\n");
+				Print_data(data);
+			}
+
 
 		} // end if
 
