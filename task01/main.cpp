@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 #include </usr/include/net/ethernet.h>
+#include <stdint.h>
 
 void usage() {
 	printf("syntax: pcap_test <interface>\n");
@@ -53,9 +54,9 @@ int main(int argc, char* argv[]) {
 		//printf("%u bytes captured\n", header->caplen);
 
 
-		struct  ether_header *eh;
+		struct ether_header *eh;
 		eh = (struct ether_header *)packet;
-		short ether_type = eh->ether_type;
+		uint16_t ether_type = eh->ether_type;
 
 
 		// check if ether type is 0x0800
@@ -81,7 +82,7 @@ int main(int argc, char* argv[]) {
 			Print_ip(&ip_header[16]);
 
 			// slice back 4 bit
-			short ip_header_len = (ip_header[0] & 0xF) * 4;
+			uint16_t ip_header_len = (ip_header[0] & 0x0F) * 4;
 			const u_char* tcp_header = ip_header + ip_header_len;
 			// printf("ip header len : %d\n", ip_header_len);
 
@@ -91,11 +92,13 @@ int main(int argc, char* argv[]) {
 			printf("<Destination port>\n");
 			printf("%d\n", tcp_header[2]*256 + tcp_header[3]);
 
-			short tcp_header_len = ((tcp_header[12] & 0xF0 ) * 4) >> 4;
-			//printf("tcp header len : %d\n", tcp_header_len);
+			uint16_t tcp_header_len = ((tcp_header[12] & 0xF0 ) >> 4) * 4;
+			printf("tcp header len : %d\n", tcp_header_len);
 
 
-			int data_len = ip_header[2] * 256 + ip_header[3] + 14;	// total len + eth_len(14)
+			// data len == total size(ip header) - ip_header_size - tcp_header_size
+			uint32_t data_len = ip_header[2] * 256 + ip_header[3] - ip_header_len - tcp_header_len;
+			printf("data len : %d\n", data_len*4);
 
 			if (data_len >= 16) {
 				const u_char * data = tcp_header + tcp_header_len;
